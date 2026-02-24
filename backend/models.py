@@ -1,0 +1,95 @@
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+
+db = SQLAlchemy()
+
+
+# Users
+class User(db.Model):
+    __tablename__ = "users"
+
+
+    id         = db.Column(db.Integer, primary_key=True)
+    username   = db.Column(db.String(80), unique=True, nullable=False)
+    email      = db.Column(db.String(120), unique=True, nullable=False)
+    password   = db.Column(db.String(256), nullable=False)
+    role       = db.Column(db.String(20), default="user")   
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    objects    = db.relationship("StorageObject", backref="owner", lazy=True)
+    usage_logs = db.relationship("UsageLog", backref="user", lazy=True)
+    invoices   = db.relationship("Invoice", backref="user", lazy=True)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "username": self.username,
+            "email": self.email,
+            "role": self.role,
+            "created_at": self.created_at.isoformat()
+        }
+    
+
+
+# Storage Objects
+class StorageObject(db.Model):
+    __tablename__ = "objects"
+
+    id          = db.Column(db.Integer, primary_key=True)
+    user_id     = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    filename    = db.Column(db.String(256), nullable=False)
+    object_key  = db.Column(db.String(512), nullable=False)   
+    file_size   = db.Column(db.BigInteger, default=0)          
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "filename": self.filename,
+            "file_size": self.file_size,
+            "file_size_kb": round(self.file_size / 1024, 2),
+            "uploaded_at": self.uploaded_at.isoformat()
+        }
+    
+
+
+# Usage Logs
+class UsageLog(db.Model):
+    __tablename__ = "usage_logs"
+
+    id           = db.Column(db.Integer, primary_key=True)
+    user_id      = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    date         = db.Column(db.Date, default=datetime.utcnow)
+    storage_used = db.Column(db.BigInteger, default=0)   
+    api_calls    = db.Column(db.Integer, default=0)       
+
+    def to_dict(self):
+        return {
+            "date": self.date.isoformat(),
+            "storage_used_mb": round(self.storage_used / (1024 * 1024), 4),
+            "api_calls": self.api_calls
+        }
+    
+
+
+# Invoices
+class Invoice(db.Model):
+    __tablename__ = "invoices"
+
+    id               = db.Column(db.Integer, primary_key=True)
+    user_id          = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    month            = db.Column(db.String(7), nullable=False)   
+    storage_cost     = db.Column(db.Float, default=0.0)
+    api_cost         = db.Column(db.Float, default=0.0)
+    total_amount     = db.Column(db.Float, default=0.0)
+    generated_at     = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "month": self.month,
+            "storage_cost": round(self.storage_cost, 2),
+            "api_cost": round(self.api_cost, 2),
+            "total_amount": round(self.total_amount, 2),
+            "generated_at": self.generated_at.isoformat()
+        }
