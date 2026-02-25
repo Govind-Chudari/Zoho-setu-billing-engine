@@ -3,6 +3,7 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identi
 from flask_bcrypt import Bcrypt
 from models import db, User
 from datetime import timedelta
+from services.minio_service import create_user_bucket
 
 auth_bp = Blueprint("auth", __name__)
 bcrypt = Bcrypt()
@@ -31,6 +32,8 @@ def register():
 
     db.session.add(new_user)
     db.session.commit()
+
+    create_user_bucket(username)
 
     return jsonify({"message": f"User '{username}' registered successfully!"}), 201
 

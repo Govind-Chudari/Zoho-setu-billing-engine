@@ -3,8 +3,8 @@ from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
 from config import Config
 from models import db
-
 from routes.auth import auth_bp, bcrypt
+from routes.objects import objects_bp 
 
 def create_app():
     app = Flask(__name__)
@@ -15,6 +15,7 @@ def create_app():
     bcrypt.init_app(app)
 
     app.register_blueprint(auth_bp)
+    app.register_blueprint(objects_bp)
 
     with app.app_context():
         db.create_all()
