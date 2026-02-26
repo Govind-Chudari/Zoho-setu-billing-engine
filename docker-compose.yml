@@ -2,7 +2,6 @@ version: "3.9"
 
 services:
 
-  # MinIO Object Storage 
   minio:
     image: minio/minio:latest
     container_name: billflow-minio
@@ -23,7 +22,6 @@ services:
     networks:
       - billflow-net
 
-  # Redis  
   redis:
     image: redis:7-alpine
     container_name: billflow-redis
@@ -39,7 +37,6 @@ services:
     networks:
       - billflow-net
 
-  # Flask Backend 
   backend:
     build:
       context: ./backend
@@ -55,6 +52,12 @@ services:
       MINIO_SECRET_KEY:  minioadmin123
       MINIO_SECURE:      "false"
       DATABASE_URL:      sqlite:///billing.db
+      REDIS_URL:         redis://redis:6379/0
+      SMTP_HOST:         ""
+      SMTP_PORT:         "587"
+      SMTP_USER:         ""
+      SMTP_PASS:         ""
+      FROM_EMAIL:        ""
     volumes:
       - ./backend/billing.db:/app/billing.db
     depends_on:
@@ -66,7 +69,73 @@ services:
       - billflow-net
     restart: unless-stopped
 
-  # React Frontend 
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: billflow-celery-worker
+    command: celery -A celery_app.celery worker --loglevel=info --concurrency=2
+    environment:
+      FLASK_ENV:         production
+      JWT_SECRET_KEY:    super-secret-jwt-key-minimum-32-characters-long
+      MINIO_ENDPOINT:    minio:9000
+      MINIO_ACCESS_KEY:  minioadmin
+      MINIO_SECRET_KEY:  minioadmin123
+      MINIO_SECURE:      "false"
+      DATABASE_URL:      sqlite:///billing.db
+      REDIS_URL:         redis://redis:6379/0
+      SMTP_HOST:         ""
+      SMTP_USER:         ""
+      SMTP_PASS:         ""
+    volumes:
+      - ./backend/billing.db:/app/billing.db
+    depends_on:
+      - backend
+      - redis
+    networks:
+      - billflow-net
+    restart: unless-stopped
+
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: billflow-celery-beat
+    command: celery -A celery_app.celery beat --loglevel=info
+    environment:
+      FLASK_ENV:         production
+      JWT_SECRET_KEY:    super-secret-jwt-key-minimum-32-characters-long
+      MINIO_ENDPOINT:    minio:9000
+      MINIO_ACCESS_KEY:  minioadmin
+      MINIO_SECRET_KEY:  minioadmin123
+      MINIO_SECURE:      "false"
+      DATABASE_URL:      sqlite:///billing.db
+      REDIS_URL:         redis://redis:6379/0
+    volumes:
+      - ./backend/billing.db:/app/billing.db
+    depends_on:
+      - redis
+    networks:
+      - billflow-net
+    restart: unless-stopped
+
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: billflow-flower
+    command: celery -A celery_app.celery flower --port=5555
+    ports:
+      - "5555:5555"
+    environment:
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      - redis
+      - celery-worker
+    networks:
+      - billflow-net
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend
@@ -80,12 +149,10 @@ services:
       - billflow-net
     restart: unless-stopped
 
-# Named Volumes 
 volumes:
   minio_data:
   redis_data:
 
-# Network 
 networks:
   billflow-net:
     driver: bridge

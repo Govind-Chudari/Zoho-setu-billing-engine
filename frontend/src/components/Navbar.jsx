@@ -31,7 +31,8 @@ export default function Navbar() {
       ? [
           { to: "/admin", icon: ShieldCheck, label: "Admin Home", special: true },
           { to: "/admin/users", icon: Users, label: "Manage Users", special: true },
-          { to: "/admin/invoices", icon: Receipt, label: "All Invoices", special: true }
+          { to: "/admin/invoices", icon: Receipt, label: "All Invoices", special: true },
+          { to: "/admin/tasks",    icon: Zap,         label: "Tasks",        special: true },
         ]
       : [])
   ];

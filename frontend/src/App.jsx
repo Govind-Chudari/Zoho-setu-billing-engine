@@ -9,6 +9,7 @@ import Billing         from "./pages/Billing";
 import AdminDashboard  from "./pages/AdminDashboard";
 import AdminUsers      from "./pages/AdminUsers";
 import AdminInvoices   from "./pages/AdminInvoices";
+import AdminTasks from "./pages/AdminTasks";
 import "./App.css";
 
 function LoadingScreen() {
@@ -65,6 +66,7 @@ function AppRoutes() {
       <Route path="/admin"          element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       <Route path="/admin/users"    element={<AdminRoute><AdminUsers /></AdminRoute>} />
       <Route path="/admin/invoices" element={<AdminRoute><AdminInvoices /></AdminRoute>} />
+      <Route path="/admin/tasks"    element={<AdminRoute><AdminTasks /></AdminRoute>} />
 
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
