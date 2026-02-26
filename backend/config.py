@@ -31,3 +31,10 @@ class Config:
         ".txt", ".csv", ".json", ".xml",            # text/data
         ".mp4", ".mp3", ".zip", ".tar", ".gz"       # media/archives
     }
+
+    PRICE_STORAGE_PER_GB_DAY = 0.25
+
+    PRICE_API_PER_CALL = 0.001
+
+    FREE_STORAGE_BYTES    = 1 * 1024 * 1024 * 1024   # 1-GB
+    FREE_API_CALLS        = 1000
