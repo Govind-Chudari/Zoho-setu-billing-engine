@@ -3,7 +3,9 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login     from "./pages/Login";
 import Register  from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-import Files     from "./pages/Files";          
+import Files     from "./pages/Files";
+import Usage     from "./pages/Usage";      
+import Billing   from "./pages/Billing";    
 import "./App.css";
 
 function PrivateRoute({ children }) {
@@ -35,9 +37,9 @@ function AppRoutes() {
       <Route path="/login"     element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/register"  element={<PublicRoute><Register /></PublicRoute>} />
       <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-      <Route path="/files"     element={<PrivateRoute><Files /></PrivateRoute>} />  
-      <Route path="/usage"     element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-      <Route path="/billing"   element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+      <Route path="/files"     element={<PrivateRoute><Files /></PrivateRoute>} />
+      <Route path="/usage"     element={<PrivateRoute><Usage /></PrivateRoute>} />     
+      <Route path="/billing"   element={<PrivateRoute><Billing /></PrivateRoute>} />   
       <Route path="*"          element={<Navigate to="/login" replace />} />
     </Routes>
   );
