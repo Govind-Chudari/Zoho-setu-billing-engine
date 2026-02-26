@@ -23,6 +23,22 @@ def get_bucket_name(username):
     return f"user-{clean}"
 
 
+def ensure_bucket_exists(username):
+    """
+    Creates the user's bucket if it doesn't exist yet.
+    Safe to call multiple times — does nothing if bucket already exists.
+    Call this before any read operation so accounts created outside
+    the normal register flow (e.g. via create_admin.py) never crash.
+    """
+    bucket_name = get_bucket_name(username)
+    try:
+        if not minio_client.bucket_exists(bucket_name):
+            minio_client.make_bucket(bucket_name)
+            print(f"✅ Auto-created missing bucket: {bucket_name}")
+    except S3Error as e:
+        print(f"⚠️  Could not ensure bucket for {username}: {e}")
+
+
 def create_user_bucket(username):
     """
     Called when a new user registers.
@@ -44,7 +60,7 @@ def create_user_bucket(username):
 def upload_file(username, file_data, filename, content_type, file_size):
     """
     Uploads a file to the user's bucket.
-    
+
     username     - who is uploading
     file_data    - the actual file bytes
     filename     - what to name the file in storage
@@ -103,6 +119,7 @@ def list_files(username):
     Lists all files in the user's bucket.
     Returns a list of file info dictionaries.
     """
+    ensure_bucket_exists(username)          # ← guard added
     bucket_name = get_bucket_name(username)
     files = []
     try:
@@ -136,8 +153,10 @@ def get_total_storage_used(username):
     """
     Calculates total storage used by a user across all their files.
     Returns size in bytes.
+    NOTE: list_files already calls ensure_bucket_exists so no
+    duplicate call needed here.
     """
-    files = list_files(username)
+    files = list_files(username)            # ensure_bucket_exists runs inside here
     return sum(f["size_bytes"] for f in files)
 
 
@@ -145,23 +164,21 @@ def get_storage_summary(username):
     """
     Returns a full storage summary for a user.
     """
-    from config import Config
-    from utils.validators import format_bytes
+    ensure_bucket_exists(username)          # ← guard added
 
     total_used = get_total_storage_used(username)
-    quota = Config.STORAGE_QUOTA_BYTES
-    remaining = max(0, quota - total_used)
-
-    percent = round((total_used / quota) * 100, 1) if quota > 0 else 0
+    quota      = Config.STORAGE_QUOTA_BYTES
+    remaining  = max(0, quota - total_used)
+    percent    = round((total_used / quota) * 100, 1) if quota > 0 else 0
 
     return {
-        "used_bytes": total_used,
-        "used_readable": format_bytes(total_used),
-        "quota_bytes": quota,
-        "quota_readable": format_bytes(quota),
-        "remaining_bytes": remaining,
+        "used_bytes":        total_used,
+        "used_readable":     format_bytes(total_used),
+        "quota_bytes":       quota,
+        "quota_readable":    format_bytes(quota),
+        "remaining_bytes":   remaining,
         "remaining_readable": format_bytes(remaining),
-        "percent_used": percent,
-        "is_near_limit": percent >= 80,
-        "is_full": percent >= 100
+        "percent_used":      percent,
+        "is_near_limit":     percent >= 80,
+        "is_full":           percent >= 100
     }

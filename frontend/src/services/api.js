@@ -82,4 +82,16 @@ export const billingAPI = {
   payInvoice: (id)                => api.post(`/api/billing/invoices/${id}/pay`)
 };
 
+// ADMIN endpoints
+export const adminAPI = {
+  overview:       ()                       => api.get("/api/admin/overview"),
+  platformStats:  ()                       => api.get("/api/admin/platform-stats"),
+  listUsers:      (params = {})            => api.get("/api/admin/users", { params }),
+  getUser:        (id)                     => api.get(`/api/admin/users/${id}`),
+  updateRole:     (id, role)               => api.put(`/api/admin/users/${id}/role`, { role }),
+  allInvoices:    (params = {})            => api.get("/api/admin/invoices", { params }),
+  generateInvoice:(userId, year, month)    => api.post(`/api/admin/users/${userId}/generate-invoice`, { year, month }),
+  payInvoice:     (invoiceId)              => api.post(`/api/admin/invoices/${invoiceId}/pay`),
+};
+
 export default api;

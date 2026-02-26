@@ -8,6 +8,7 @@ from routes.auth import auth_bp, bcrypt
 from routes.objects import objects_bp 
 from routes.usage   import usage_bp 
 from routes.billing import billing_bp 
+from routes.admin   import admin_bp 
 
 def create_app():
     app = Flask(__name__)
@@ -23,14 +24,15 @@ def create_app():
     app.register_blueprint(objects_bp)
     app.register_blueprint(usage_bp) 
     app.register_blueprint(billing_bp)
+    app.register_blueprint(admin_bp)
 
     with app.app_context():
         db.create_all()
-        print("✅ Database tables created!")
+        print("Database tables created!")
 
     @app.route("/")
     def home():
-        return jsonify({"message": "Billing Engine API is running! 🚀"})
+        return jsonify({"message": "Billing Engine API is running! "})
     return app
 
 

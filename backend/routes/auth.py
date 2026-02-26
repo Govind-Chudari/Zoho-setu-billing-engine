@@ -62,7 +62,8 @@ def login():
         "message": "Login successful!",
         "token": token,
         "username": user.username,
-        "user_id": user.id
+        "user_id": user.id,
+        "role":     user.role,
     }), 200
 
 
@@ -73,8 +74,12 @@ def login():
 def profile():
     user_id = get_jwt_identity()
     user = User.query.get(int(user_id))
-
     if not user:
         return jsonify({"error": "User not found"}), 404
-
-    return jsonify(user.to_dict()), 200
+    return jsonify({
+        "id":         user.id,
+        "username":   user.username,
+        "email":      user.email,
+        "role":       user.role,          
+        "created_at": user.created_at.isoformat()
+    }), 200
