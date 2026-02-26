@@ -4,15 +4,22 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
-    JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "fallback-secret")
+    JWT_SECRET_KEY = os.environ.get(
+        "JWT_SECRET_KEY",
+        "dev-secret-key-change-in-production-must-be-32-chars"
+    )
+    JWT_ACCESS_TOKEN_EXPIRES = 900  # 15 min
 
-    SQLALCHEMY_DATABASE_URI = "sqlite:///billing.db"
+    SQLALCHEMY_DATABASE_URI = os.environ.get(
+        "DATABASE_URL",
+        "sqlite:///billing.db"
+    )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    MINIO_ENDPOINT   = os.getenv("MINIO_ENDPOINT", "localhost:9000")
-    MINIO_ACCESS_KEY = os.getenv("MINIO_ACCESS_KEY", "minioadmin")
-    MINIO_SECRET_KEY = os.getenv("MINIO_SECRET_KEY", "minioadmin123")
-    MINIO_SECURE     = os.getenv("MINIO_SECURE", "False") == "True"
+    MINIO_ENDPOINT   = os.environ.get("MINIO_ENDPOINT",   "localhost:9000")
+    MINIO_ACCESS_KEY = os.environ.get("MINIO_ACCESS_KEY", "minioadmin")
+    MINIO_SECRET_KEY = os.environ.get("MINIO_SECRET_KEY", "minioadmin123")
+    MINIO_SECURE     = os.environ.get("MINIO_SECURE",     "false").lower() == "true"
 
 
     MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024

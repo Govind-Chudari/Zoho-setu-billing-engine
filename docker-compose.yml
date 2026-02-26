@@ -1,0 +1,91 @@
+version: "3.9"
+
+services:
+
+  # MinIO Object Storage 
+  minio:
+    image: minio/minio:latest
+    container_name: billflow-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER:     minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - billflow-net
+
+  # Redis  
+  redis:
+    image: redis:7-alpine
+    container_name: billflow-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - billflow-net
+
+  # Flask Backend 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: billflow-backend
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_ENV:         production
+      JWT_SECRET_KEY:    super-secret-jwt-key-minimum-32-characters-long
+      MINIO_ENDPOINT:    minio:9000
+      MINIO_ACCESS_KEY:  minioadmin
+      MINIO_SECRET_KEY:  minioadmin123
+      MINIO_SECURE:      "false"
+      DATABASE_URL:      sqlite:///billing.db
+    volumes:
+      - ./backend/billing.db:/app/billing.db
+    depends_on:
+      minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - billflow-net
+    restart: unless-stopped
+
+  # React Frontend 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: billflow-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - billflow-net
+    restart: unless-stopped
+
+# Named Volumes 
+volumes:
+  minio_data:
+  redis_data:
+
+# Network 
+networks:
+  billflow-net:
+    driver: bridge
