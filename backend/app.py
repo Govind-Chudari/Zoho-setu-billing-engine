@@ -1,6 +1,7 @@
 from flask import Flask, jsonify
 from flask_jwt_extended import JWTManager
 from flask_bcrypt import Bcrypt
+from flask_cors import CORS 
 from config import Config
 from models import db
 from routes.auth import auth_bp, bcrypt
@@ -11,6 +12,8 @@ from routes.billing import billing_bp
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+
+    CORS(app, origins=["http://localhost:3000"])
 
     db.init_app(app)
     JWTManager(app)
@@ -27,18 +30,7 @@ def create_app():
 
     @app.route("/")
     def home():
-        return jsonify({
-            "message": "Billing Engine API is running! 🚀",
-            "endpoints": {
-                "auth":    ["/api/register", "/api/login", "/api/profile"],
-                "objects": ["/api/objects/upload", "/api/objects/list",
-                            "/api/objects/download/<file>", "/api/objects/<file>"],
-                "usage":   ["/api/usage/today", "/api/usage/history",
-                            "/api/usage/current-month", "/api/usage/monthly"],
-                "billing": ["/api/billing/estimate", "/api/billing/calculate",
-                            "/api/billing/generate", "/api/billing/invoices"]
-            }
-        }), 200
+        return jsonify({"message": "Billing Engine API is running! 🚀"})
     return app
 
 
