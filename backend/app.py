@@ -9,6 +9,7 @@ from routes.objects import objects_bp
 from routes.usage   import usage_bp 
 from routes.billing import billing_bp 
 from routes.admin   import admin_bp 
+from routes.tasks   import tasks_bp 
 
 def create_app():
     app = Flask(__name__)
@@ -25,6 +26,7 @@ def create_app():
     app.register_blueprint(usage_bp) 
     app.register_blueprint(billing_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(tasks_bp)
 
     with app.app_context():
         db.create_all()
