@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, User, StorageObject, UsageLog
+from services.usage_service import log_api_call, update_storage_snapshot
 from services.minio_service import (
     upload_file, download_file, delete_file,
     list_files, get_total_storage_used,get_storage_summary
@@ -18,27 +19,27 @@ def get_current_user():
     return User.query.get(int(user_id))
 
 
-def log_api_call(user_id):
-    today = date.today()
-    log = UsageLog.query.filter_by(user_id=user_id, date=today).first()
-    if log:
-        log.api_calls += 1
-    else:
-        log = UsageLog(user_id=user_id, date=today, api_calls=1, storage_used=0)
-        db.session.add(log)
-    db.session.commit()
+# def log_api_call(user_id):
+#     today = date.today()
+#     log = UsageLog.query.filter_by(user_id=user_id, date=today).first()
+#     if log:
+#         log.api_calls += 1
+#     else:
+#         log = UsageLog(user_id=user_id, date=today, api_calls=1, storage_used=0)
+#         db.session.add(log)
+#     db.session.commit()
 
 
-def update_storage_log(user_id, username):
-    today = date.today()
-    total_bytes = get_total_storage_used(username)
-    log = UsageLog.query.filter_by(user_id=user_id, date=today).first()
-    if log:
-        log.storage_used = total_bytes
-    else:
-        log = UsageLog(user_id=user_id, date=today, storage_used=total_bytes, api_calls=0)
-        db.session.add(log)
-    db.session.commit()
+# def update_storage_log(user_id, username):
+#     today = date.today()
+#     total_bytes = get_total_storage_used(username)
+#     log = UsageLog.query.filter_by(user_id=user_id, date=today).first()
+#     if log:
+#         log.storage_used = total_bytes
+#     else:
+#         log = UsageLog(user_id=user_id, date=today, storage_used=total_bytes, api_calls=0)
+#         db.session.add(log)
+#     db.session.commit()
 
 
 # UPLOAD file
@@ -100,7 +101,7 @@ def upload():
     db.session.commit()
     
     log_api_call(user.id)
-    update_storage_log(user.id, user.username)
+    update_storage_snapshot(user.id, user.username)
 
     summary = get_storage_summary(user.username)
 
@@ -254,7 +255,7 @@ def delete(filename):
     db.session.commit()
 
     log_api_call(user.id)
-    update_storage_log(user.id, user.username)
+    update_storage_snapshot(user.id, user.username)
 
     summary = get_storage_summary(user.username)
 
