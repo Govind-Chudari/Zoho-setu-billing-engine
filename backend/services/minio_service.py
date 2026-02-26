@@ -2,6 +2,8 @@ from minio import Minio
 from minio.error import S3Error
 from config import Config
 import io
+from utils.validators import format_bytes
+
 
 minio_client = Minio(
     Config.MINIO_ENDPOINT,
@@ -137,3 +139,29 @@ def get_total_storage_used(username):
     """
     files = list_files(username)
     return sum(f["size_bytes"] for f in files)
+
+
+def get_storage_summary(username):
+    """
+    Returns a full storage summary for a user.
+    """
+    from config import Config
+    from utils.validators import format_bytes
+
+    total_used = get_total_storage_used(username)
+    quota = Config.STORAGE_QUOTA_BYTES
+    remaining = max(0, quota - total_used)
+
+    percent = round((total_used / quota) * 100, 1) if quota > 0 else 0
+
+    return {
+        "used_bytes": total_used,
+        "used_readable": format_bytes(total_used),
+        "quota_bytes": quota,
+        "quota_readable": format_bytes(quota),
+        "remaining_bytes": remaining,
+        "remaining_readable": format_bytes(remaining),
+        "percent_used": percent,
+        "is_near_limit": percent >= 80,
+        "is_full": percent >= 100
+    }
